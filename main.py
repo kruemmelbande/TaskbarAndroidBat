@@ -51,9 +51,8 @@ try:
                     d.text((0,0), bat, fill=(255,0,0), font = font_type)            
                     img.save(image)
         except Exception as e:
-            print(e)
+            #print(e)
             time.sleep(10)
-        
         # display image in systray 
         if n==1:
             systray = SysTrayIcon(image, "Android battery percentage",on_quit=on_quit_callback)
