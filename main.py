@@ -1,5 +1,7 @@
 iname="icon.ico"
 ipath="C:\\tmp\\"
+notifyPerc=84
+showNotifications=True
 
 
 from infi.systray import SysTrayIcon
@@ -7,6 +9,8 @@ from PIL import Image, ImageDraw,ImageFont
 import time
 import subprocess
 import os
+from win10toast import ToastNotifier
+toast = ToastNotifier()
 si = subprocess.STARTUPINFO()
 si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 def on_quit_callback(systray):
@@ -18,6 +22,8 @@ n=1
 bat=0
 rawbat=""
 last=-1
+noteA=0
+noteB=0
 try:
     while True:
         # create image
@@ -30,20 +36,44 @@ try:
             rawbat=subprocess.check_output(['adb', 'shell', 'dumpsys', 'battery'], startupinfo=si).decode("utf-8")
         except:
             rawbat=""
+            noteA=0
+            noteB=0
+
         try:
             #print(str(rawbat))
             for line in rawbat.split("\n"):
                 if "level" in line:
                     last=bat
                     bat=line.split(":")[1].strip()
-                    if int(bat)>=84:
+                    if int(bat)>=notifyPerc:
                         color=(0,255,0)
+                        if noteA==0 and showNotifications:
+                            toast.show_toast(
+                                "Battery almost full",
+                                "Your battery has reached "+bat+"%.",
+                                duration = 3,
+                                icon_path = image,
+                                threaded = True,
+                            )
+                        noteA=1
+
                     else:
                         color=(255,255,255)
+                        noteA=0
                     if last!=bat:
                         if bat=="100":
                             font_type  = ImageFont.truetype("arial.ttf", 30)
+                            if noteB==0 and showNotifications:
+                                toast.show_toast(
+                                    "Battery full",
+                                    "Your battery has reached 100%",
+                                    duration = 5,
+                                    icon_path = image,
+                                    threaded = True,
+                                )
+                            noteB=1
                         else:
+                            noteB=0
                             font_type  = ImageFont.truetype("arial.ttf", 45)
                         d.text((0,0), bat, fill=color, font = font_type)
                         img.save(image)
@@ -51,6 +81,8 @@ try:
                     break
             else:
                 last=bat
+                noteA=0
+                noteB=0
                 bat="N/A"
                 if bat!=last:
                     font_type  = ImageFont.truetype("arial.ttf", 30)
